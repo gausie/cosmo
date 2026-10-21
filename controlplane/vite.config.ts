@@ -3,6 +3,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     pool: 'forks',
+    isolate: false,
     // Create the shared Keycloak realm exactly once, before any worker spawns.
     // This removes the concurrent realm-creation race between parallel test files.
     globalSetup: ['./test/global-setup.ts'],
