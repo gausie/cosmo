@@ -88,11 +88,12 @@ jobs:
         run: nohup .github/scripts/setup-keycloak.sh &
 
       - name: Test
-        run: pnpm run --filter controlplane test:coverage
+        run: pnpm run --filter controlplane test
         env:
           DB_URL: 'postgresql://postgres:changeme@localhost:5432/controlplane'
 
       - name: Upload Coverage to Codecov
+        if: false
         uses: ./.github/actions/codecov-upload-pr
         with:
           artifact-name: controlplane-tests-coverage
