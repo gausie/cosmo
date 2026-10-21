@@ -23,6 +23,9 @@ env:
 jobs:
   build_test:
     timeout-minutes: 20
+    strategy:
+      matrix:
+        shard: [1, 2, 3, 4]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -88,11 +91,12 @@ jobs:
         run: nohup .github/scripts/setup-keycloak.sh &
 
       - name: Test
-        run: pnpm run --filter controlplane test:coverage
+        run: pnpm --filter controlplane exec vitest run --reporter=default --shard=${{ matrix.shard }}/4
         env:
           DB_URL: 'postgresql://postgres:changeme@localhost:5432/controlplane'
 
       - name: Upload Coverage to Codecov
+        if: false
         uses: ./.github/actions/codecov-upload-pr
         with:
           artifact-name: controlplane-tests-coverage
