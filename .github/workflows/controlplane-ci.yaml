@@ -23,6 +23,9 @@ env:
 jobs:
   build_test:
     timeout-minutes: 20
+    strategy:
+      matrix:
+        shard: [1, 2, 3]
     runs-on: ubuntu-latest
     permissions:
       contents: read
