@@ -17,6 +17,7 @@ import { DefaultNamespace, NamespaceRepository } from './repositories/NamespaceR
 import { verifyJwt } from './crypto/jwt.js';
 import { OrganizationGroupRepository } from './repositories/OrganizationGroupRepository.js';
 import { RBACEvaluator } from './services/RBACEvaluator.js';
+import { RunMigration } from './migrate.js';
 
 export type UserTestData = {
   userId: string;
@@ -35,10 +36,26 @@ export const defaultGroupDescription: Record<string, string> = {
   viewer: 'Grants readonly access for the organization.',
 };
 
+const TEST_ADMIN_DATABASE_URL = 'postgresql://postgres:changeme@localhost:5432/postgres';
+const TEST_TEMPLATE_DATABASE = 'controlplane_test_template';
+
+/**
+ * Migrates a template database once, before any test worker starts. Each file then clones it,
+ * which is far cheaper than running every migration again for each of the ~150 files.
+ */
+export async function createTemplateDatabase(): Promise<void> {
+  const sql = postgres(TEST_ADMIN_DATABASE_URL, { max: 1 });
+  await sql`DROP DATABASE IF EXISTS "${sql.unsafe(TEST_TEMPLATE_DATABASE)}" (FORCE);`;
+  await sql`CREATE DATABASE "${sql.unsafe(TEST_TEMPLATE_DATABASE)}";`;
+  await sql.end({ timeout: 5 });
+
+  await RunMigration(`postgresql://postgres:changeme@localhost:5432/${TEST_TEMPLATE_DATABASE}`);
+}
+
 export async function beforeAllSetup(): Promise<string> {
   const dbname = nuid.next();
-  const sql = postgres('postgresql://postgres:changeme@localhost:5432/postgres', { max: 1 });
-  await sql`CREATE DATABASE "${sql.unsafe(dbname)}";`;
+  const sql = postgres(TEST_ADMIN_DATABASE_URL, { max: 1 });
+  await sql`CREATE DATABASE "${sql.unsafe(dbname)}" TEMPLATE "${sql.unsafe(TEST_TEMPLATE_DATABASE)}";`;
   await sql.end();
 
   return dbname;

@@ -1,6 +1,7 @@
 import { pino } from 'pino';
 import Keycloak from '../src/core/services/Keycloak.js';
 import { retryWithBackoff } from '../src/core/util/timers.js';
+import { createTemplateDatabase } from '../src/core/test-util.js';
 import {
   TEST_DIRECT_GRANT_CLIENT_ID,
   TEST_REALM,
@@ -14,6 +15,8 @@ import {
  * with "Realm not found".
  */
 export default async function setup() {
+  await createTemplateDatabase();
+
   // Silence the admin client; setup failures surface via the retries below.
   const logger = pino({ level: 'silent' });
   const keycloakClient = new Keycloak({ ...keycloakClientOptions, logger });
